@@ -64,18 +64,13 @@ OOB <- round(tail(model$err.rate,1)[1]*100,4)
 
 Estimated on the training set the out sample error is expected to be `r OOB`%.
 
+The importance of all features are: 
 
 ```{r,fig.height=10}
-varImp <- varImpPlot(model,n.var=52)
+varImpPlot(model,n.var=52)
 ```
 
-The most important features are:
-
-```{r}
-head(varImp,4)
-```
-
-But all features are contributing, so it's not necessary to reduce the number of features with for example PCA preprocessing and we keep the current model.
+It turns out all features are contributing, so it's not necessary to reduce the number of features with for example PCA preprocessing and we keep the current model.
 
 
 ### Cross validation
