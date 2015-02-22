@@ -1,0 +1,108 @@
+---
+title: 'Practical Machine Learning Course Project: Prediction Assignment Writeup'
+output:
+  html_document:
+    toc: true
+    theme: united
+---
+
+
+### Background
+
+Using devices such as Jawbone Up, Nike FuelBand, and Fitbit it is now possible to collect a large amount of data about personal activity relatively inexpensively. These type of devices are part of the quantified self movement - a group of enthusiasts who take measurements about themselves regularly to improve their health, to find patterns in their behavior, or because they are tech geeks. One thing that people regularly do is quantify how much of a particular activity they do, but they rarely quantify how well they do it. In this project, your goal will be to use data from accelerometers on the belt, forearm, arm, and dumbell of 6 participants. They were asked to perform barbell lifts correctly and incorrectly in 5 different ways. 
+
+The goal of this project is to predict the manner in which they did the exercise. This is the "classe" variable in the training set. You may use any of the other variables to predict with. You should create a report describing how you built your model, how you used cross validation, what you think the expected out of sample error is, and why you made the choices you did. You will also use your prediction model to predict 20 different test cases. 
+
+The data for this project come from this source: http://groupware.les.inf.puc-rio.br/har.
+
+### Pre-processing
+
+The dataset is loaded, empty and unnecessary columns are removed.
+
+```{r,fig.height=4}
+## Load packages
+options(warn=-1)
+suppressMessages(library(caret))
+suppressMessages(library(randomForest))
+suppressMessages(library(knitr))
+
+## Read dataset
+trainingcsv <- read.csv('pml-training.csv')
+testcsv <- read.csv('pml-testing.csv',na.strings=c("NA", "", "#DIV/0!"))
+
+## Pre-process dataset
+ColstoBeRemoved <-apply(is.na(testcsv),2,any) #empty or Na cols
+ColstoBeRemoved[1:7]=T #timestamps, user, window (these variables are no predictors), class/problem id
+training <- trainingcsv[,!ColstoBeRemoved]
+test <- testcsv[,!ColstoBeRemoved]
+
+## Check if classes are in 'balance'
+plot(training$classe)
+```
+
+The five classes are reasonably in balance, this is good for the performance of the classifier. To cross validate the dataset is split in a training (80%) and a validation set (20%). As a classifier Random Forest, Boosting and Recursive Partitioning and Regression Trees have been  tried. Random Forest gave the most promising results without tuning, so its performance is reported here.
+
+```{r}
+## Split dataset in training (80%) and validation set (20%)
+set.seed(1234) #set a seed to be reproducible
+
+train_idx <- createDataPartition(y=training$classe, p = 0.8, list = FALSE)
+train <- training[train_idx,]
+val   <- training[-train_idx,] 
+```
+
+
+### Training the classifier
+
+```{r}
+## Train random Forest on training set      
+model <- randomForest(classe ~., data=train, importance=TRUE)        
+model
+
+OOB <- round(tail(model$err.rate,1)[1]*100,4)
+```
+
+Estimated on the training set the out sample error is expected to be `r OOB`%.
+
+
+```{r,fig.height=10}
+varImp <- varImpPlot(model,n.var=52)
+```
+
+The most important features are:
+
+```{r}
+head(varImp,4)
+```
+
+But all features are contributing, so it's not necessary to reduce the number of features with for example PCA preprocessing and we keep the current model.
+
+
+### Cross validation
+
+The model has been evaluated on the validation set.
+
+```{r}
+## Evaluate model on test set
+conf <- confusionMatrix(predict(model,val),val$classe)
+conf
+
+Accuracy <- conf$overall[[1]]
+OOB_cross <- round((1-Accuracy)*100,4)
+
+```
+
+The accuracy on the validation set is `r round(Accuracy,4)`% and thus the estimated out of sample error is `r OOB_cross`%.
+
+### Prediction
+
+With the model the classes of the twenty test cases are predicted.
+
+```{r}
+answers <- predict(model,test)
+answers
+```
+
+### Conclusion
+
+With a Random Forest classifier an accuracy of `r round(Accuracy,4)`% is reached on the Weight Lifting Exercise Dataset.
