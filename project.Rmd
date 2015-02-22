@@ -92,7 +92,7 @@ OOB_cross <- round((1-Accuracy)*100,4)
 
 ```
 
-The accuracy on the validation set is `r round(Accuracy,4)`% and thus the estimated out of sample error is `r OOB_cross`%.
+The accuracy on the validation set is `r round(Accuracy*100,2)`% and thus the estimated out of sample error is `r OOB_cross`%.
 
 ### Prediction
 
@@ -105,4 +105,4 @@ answers
 
 ### Conclusion
 
-With a Random Forest classifier an accuracy of `r round(Accuracy,4)`% is reached on the Weight Lifting Exercise Dataset.
+With a Random Forest classifier an accuracy of `r round(Accuracy*100,2)`% is reached on the Weight Lifting Exercise Dataset.
